@@ -386,10 +386,10 @@ class BusTrackingDashboard extends StatefulWidget {
 
 class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
   String studentName = "MIR";
-  String studentId = "JUCSE14 3F";
+  String studentId = "24BLC1270";
   String busNumber = "7A";
   String busStatus = "Reached";
-  String busLocation = "Mogabari";
+  String busLocation = "Arumbakkam";
   String timeAgo = "1m ago";
   int _selectedIndex = 0;
   int notificationCount = 3; // Sample notification count
@@ -940,11 +940,13 @@ class HomePage extends StatelessWidget {
               Expanded(
                 child: _buildQuickActionCard(
                   'Complaints',
-                  Icons
-                      .report_problem, // Changed from Icons.schedule to Icons.report_problem
+                  Icons.report_problem,
                   Colors.orange,
                   () {
-                    // Navigate to complaints
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ComplaintsPage()),
+                    );
                   },
                 ),
               ),
@@ -1523,3 +1525,1264 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
+
+// Main Complaints Page
+class ComplaintsPage extends StatefulWidget {
+  @override
+  _ComplaintsPageState createState() => _ComplaintsPageState();
+}
+
+class _ComplaintsPageState extends State<ComplaintsPage> {
+  List<Complaint> complaints = [
+    Complaint(
+      id: 'CMP001',
+      type: 'Driver Behavior',
+      issue: 'Driver was rude and unhelpful',
+      busNumber: '7A',
+      status: 'Under Review',
+      date: '2024-01-15',
+      description:
+          'The bus driver was very rude when I asked about the route. He refused to help and was unprofessional.',
+    ),
+    Complaint(
+      id: 'CMP002',
+      type: 'Late Arrival',
+      issue: 'Bus arrived 30 minutes late',
+      busNumber: '8A',
+      status: 'Resolved',
+      date: '2024-01-12',
+      description:
+          'Bus 8A was consistently late for the past week, causing me to miss my classes.',
+    ),
+    Complaint(
+      id: 'CMP003',
+      type: 'AC Not Working',
+      issue: 'Air conditioning system failed',
+      busNumber: '7A',
+      status: 'In Progress',
+      date: '2024-01-10',
+      description:
+          'The AC in bus 7A has not been working for the past 3 days. Very uncomfortable during hot weather.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Complaints',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Complaint Management',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Register new complaints or view existing ones',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionCard(
+                    'Register Complaint',
+                    Icons.add_circle_outline,
+                    Colors.orange[600]!,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterComplaintPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildActionCard(
+                    'View Complaints',
+                    Icons.list_alt,
+                    Colors.blue[600]!,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ViewComplaintsPage(complaints: complaints),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+
+            // Recent Complaints Preview
+            Text(
+              'Recent Complaints',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 12),
+
+            Expanded(
+              child: complaints.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No complaints found',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Your registered complaints will appear here',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: complaints.length > 3 ? 3 : complaints.length,
+                      itemBuilder: (context, index) {
+                        return _buildComplaintPreviewCard(complaints[index]);
+                      },
+                    ),
+            ),
+
+            // View All Button
+            if (complaints.length > 3)
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(top: 16),
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ViewComplaintsPage(complaints: complaints),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.indigo[700],
+                    side: BorderSide(color: Colors.indigo[700]!),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'View All Complaints',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Icon(icon, size: 28, color: color),
+              ),
+              SizedBox(height: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComplaintPreviewCard(Complaint complaint) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding: EdgeInsets.all(16),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _getStatusColor(complaint.status).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              _getComplaintIcon(complaint.type),
+              color: _getStatusColor(complaint.status),
+              size: 20,
+            ),
+          ),
+          title: Text(
+            complaint.issue,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    'Bus ${complaint.busNumber}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text('•', style: TextStyle(color: Colors.grey[400])),
+                  SizedBox(width: 8),
+                  Text(
+                    complaint.date,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          trailing: Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getStatusColor(complaint.status).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              complaint.status,
+              style: TextStyle(
+                color: _getStatusColor(complaint.status),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'resolved':
+        return Colors.green[600]!;
+      case 'in progress':
+        return Colors.blue[600]!;
+      case 'under review':
+        return Colors.orange[600]!;
+      case 'rejected':
+        return Colors.red[600]!;
+      default:
+        return Colors.grey[600]!;
+    }
+  }
+
+  IconData _getComplaintIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'driver behavior':
+        return Icons.person_outline;
+      case 'late arrival':
+        return Icons.schedule;
+      case 'ac not working':
+        return Icons.ac_unit;
+      case 'cleanliness':
+        return Icons.cleaning_services;
+      case 'route issue':
+        return Icons.map;
+      default:
+        return Icons.report_problem;
+    }
+  }
+}
+
+// Register Complaint Page
+class RegisterComplaintPage extends StatefulWidget {
+  @override
+  _RegisterComplaintPageState createState() => _RegisterComplaintPageState();
+}
+
+class _RegisterComplaintPageState extends State<RegisterComplaintPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _issueController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _busNumberController = TextEditingController();
+
+  String? _selectedComplaintType;
+  List<String> _complaintTypes = [
+    'Driver Behavior',
+    'Late Arrival',
+    'AC Not Working',
+    'Cleanliness',
+    'Route Issue',
+    'Bus Condition',
+    'Other',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Register Complaint',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.orange[600],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Text(
+                'File a Complaint',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Please provide details about your complaint',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 24),
+
+              // Complaint Type Dropdown
+              Text(
+                'Complaint Type *',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedComplaintType,
+                  hint: Text('Select complaint type'),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  items: _complaintTypes.map((String type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedComplaintType = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select a complaint type';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Bus Number
+              Text(
+                'Bus Number *',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _busNumberController,
+                decoration: InputDecoration(
+                  hintText: 'Enter bus number (e.g., 7A)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  prefixIcon: Icon(Icons.directions_bus),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the bus number';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
+
+              // Issue Summary
+              Text(
+                'Issue Summary *',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _issueController,
+                decoration: InputDecoration(
+                  hintText: 'Brief summary of the issue',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                maxLength: 100,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please provide an issue summary';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
+
+              // Detailed Description
+              Text(
+                'Detailed Description *',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  hintText: 'Provide detailed description of the complaint...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: EdgeInsets.all(16),
+                ),
+                maxLines: 5,
+                maxLength: 500,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please provide a detailed description';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 30),
+
+              // Submit Button
+              Container(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _submitComplaint();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange[600],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    'Submit Complaint',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submitComplaint() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green[600]),
+              SizedBox(width: 8),
+              Text('Success'),
+            ],
+          ),
+          content: Text(
+            'Your complaint has been registered successfully. You will receive a confirmation with complaint ID shortly.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Go back to complaints page
+              },
+              child: Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.orange[600],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _issueController.dispose();
+    _descriptionController.dispose();
+    _busNumberController.dispose();
+    super.dispose();
+  }
+}
+
+// View Complaints Page
+class ViewComplaintsPage extends StatefulWidget {
+  final List<Complaint> complaints;
+
+  ViewComplaintsPage({required this.complaints});
+
+  @override
+  _ViewComplaintsPageState createState() => _ViewComplaintsPageState();
+}
+
+class _ViewComplaintsPageState extends State<ViewComplaintsPage> {
+  String _selectedFilter = 'All';
+  List<String> _filters = [
+    'All',
+    'Under Review',
+    'In Progress',
+    'Resolved',
+    'Rejected',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    List<Complaint> filteredComplaints = _selectedFilter == 'All'
+        ? widget.complaints
+        : widget.complaints
+              .where((complaint) => complaint.status == _selectedFilter)
+              .toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'My Complaints',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.blue[600],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Complaints',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '${filteredComplaints.length} complaint(s) found',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+
+            // Filter Chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _filters.map((filter) {
+                  bool isSelected = _selectedFilter == filter;
+                  return Container(
+                    margin: EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                      selectedColor: Colors.blue[100],
+                      checkmarkColor: Colors.blue[600],
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.blue[600] : Colors.grey[700],
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            SizedBox(height: 20),
+
+            // Complaints List
+            Expanded(
+              child: filteredComplaints.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No complaints found',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            _selectedFilter == 'All'
+                                ? 'You haven\'t registered any complaints yet'
+                                : 'No $_selectedFilter complaints found',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredComplaints.length,
+                      itemBuilder: (context, index) {
+                        return _buildComplaintCard(filteredComplaints[index]);
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComplaintCard(Complaint complaint) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ComplaintDetailsPage(complaint: complaint),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        complaint.id,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(
+                          complaint.status,
+                        ).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getStatusColor(complaint.status),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        complaint.status,
+                        style: TextStyle(
+                          color: _getStatusColor(complaint.status),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+
+                // Issue Title
+                Text(
+                  complaint.issue,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                SizedBox(height: 8),
+
+                // Type and Bus Info
+                Row(
+                  children: [
+                    Icon(
+                      _getComplaintIcon(complaint.type),
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      complaint.type,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Icon(
+                      Icons.directions_bus,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Bus ${complaint.busNumber}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+
+                // Date and Action
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filed on ${complaint.date}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                    Text(
+                      'Tap to view details →',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'resolved':
+        return Colors.green[600]!;
+      case 'in progress':
+        return Colors.blue[600]!;
+      case 'under review':
+        return Colors.orange[600]!;
+      case 'rejected':
+        return Colors.red[600]!;
+      default:
+        return Colors.grey[600]!;
+    }
+  }
+
+  IconData _getComplaintIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'driver behavior':
+        return Icons.person_outline;
+      case 'late arrival':
+        return Icons.schedule;
+      case 'ac not working':
+        return Icons.ac_unit;
+      case 'cleanliness':
+        return Icons.cleaning_services;
+      case 'route issue':
+        return Icons.map;
+      default:
+        return Icons.report_problem;
+    }
+  }
+}
+
+// Complaint Details Page
+class ComplaintDetailsPage extends StatelessWidget {
+  final Complaint complaint;
+
+  ComplaintDetailsPage({required this.complaint});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Complaint Details',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Status Card
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _getStatusColor(complaint.status).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _getStatusColor(complaint.status),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(complaint.status),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          complaint.status,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Spacer(),
+                      Text(
+                        complaint.id,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _getStatusColor(complaint.status),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    complaint.issue,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Complaint Info
+            _buildInfoSection('Complaint Information', [
+              _buildInfoRow('Type', complaint.type, Icons.category),
+              _buildInfoRow(
+                'Bus Number',
+                complaint.busNumber,
+                Icons.directions_bus,
+              ),
+              _buildInfoRow('Date Filed', complaint.date, Icons.calendar_today),
+            ]),
+            SizedBox(height: 24),
+
+            // Description
+            _buildInfoSection('Description', [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Text(
+                  complaint.description,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ]),
+            SizedBox(height: 24),
+
+            // Actions
+            if (complaint.status.toLowerCase() == 'under review' ||
+                complaint.status.toLowerCase() == 'in progress')
+              Container(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _showUpdateDialog(context, complaint);
+                  },
+                  icon: Icon(Icons.edit),
+                  label: Text('Request Update'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.indigo[700],
+                    side: BorderSide(color: Colors.indigo[700]!),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpdateDialog(BuildContext context, Complaint complaint) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text('Request Update'),
+          content: Text(
+            'Would you like to request an update on your complaint ${complaint.id}? We will notify the transport office to provide you with the latest status.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showSuccessSnackBar(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo[700],
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Send Request'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Update request sent successfully!'),
+          ],
+        ),
+        backgroundColor: Colors.green[600],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'resolved':
+        return Colors.green[600]!;
+      case 'in progress':
+        return Colors.blue[600]!;
+      case 'under review':
+        return Colors.orange[600]!;
+      case 'rejected':
+        return Colors.red[600]!;
+      default:
+        return Colors.grey[600]!;
+    }
+  }
+}
+
+// Complaint Data Model
+class Complaint {
+  final String id;
+  final String type;
+  final String issue;
+  final String busNumber;
+  final String status;
+  final String date;
+  final String description;
+
+  Complaint({
+    required this.id,
+    required this.type,
+    required this.issue,
+    required this.busNumber,
+    required this.status,
+    required this.date,
+    required this.description,
+  });
+}
+
+// Update the HomePage quick action for complaints
+// Replace the existing complaints quick action in your main.dart with:
+/*
+Expanded(
+  child: _buildQuickActionCard(
+    'Complaints',
+    Icons.report_problem,
+    Colors.orange,
+    () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ComplaintsPage()),
+      );
+    },
+  ),
+),
+*/
