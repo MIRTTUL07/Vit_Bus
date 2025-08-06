@@ -4,6 +4,367 @@ void main() {
   runApp(BusTrackingApp());
 }
 
+// Route Map Page
+class RouteMapPage extends StatelessWidget {
+  final String busNumber;
+
+  RouteMapPage({required this.busNumber});
+
+  @override
+  Widget build(BuildContext context) {
+    List<RouteStop> stops = _getRouteStops(busNumber);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Route Map - Bus $busNumber',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Route Map',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Bus $busNumber Schedule',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+
+            // Route Timeline
+            Expanded(
+              child: ListView.builder(
+                itemCount: stops.length,
+                itemBuilder: (context, index) {
+                  RouteStop stop = stops[index];
+                  bool isLast = index == stops.length - 1;
+
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Timeline indicator
+                        Column(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: stop.isCompleted
+                                    ? Colors.green[600]
+                                    : stop.isCurrent
+                                    ? Colors.indigo[700]
+                                    : Colors.grey[300],
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                stop.icon,
+                                color: stop.isCompleted || stop.isCurrent
+                                    ? Colors.white
+                                    : Colors.grey[600],
+                                size: 20,
+                              ),
+                            ),
+                            if (!isLast)
+                              Container(
+                                width: 3,
+                                height: 60,
+                                color: Colors.grey[300],
+                                margin: EdgeInsets.symmetric(vertical: 4),
+                              ),
+                          ],
+                        ),
+                        SizedBox(width: 16),
+
+                        // Stop information
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: stop.isCurrent
+                                  ? Colors.indigo[50]
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: stop.isCurrent
+                                    ? Colors.indigo[700]!
+                                    : Colors.grey[200]!,
+                                width: stop.isCurrent ? 2 : 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        stop.name,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: stop.isCurrent
+                                              ? Colors.indigo[700]
+                                              : Colors.grey[800],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: stop.isCompleted
+                                            ? Colors.green[100]
+                                            : stop.isCurrent
+                                            ? Colors.indigo[100]
+                                            : Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        stop.time,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: stop.isCompleted
+                                              ? Colors.green[700]
+                                              : stop.isCurrent
+                                              ? Colors.indigo[700]
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (stop.isCurrent) ...[
+                                  SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.directions_bus,
+                                        size: 16,
+                                        color: Colors.indigo[700],
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Bus is currently here',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.indigo[700],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (stop.isCompleted && !stop.isCurrent) ...[
+                                  SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        size: 16,
+                                        color: Colors.green[600],
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Reached',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green[600],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Legend
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildLegendItem(
+                    Colors.green[600]!,
+                    'Reached',
+                    Icons.check_circle,
+                  ),
+                  _buildLegendItem(
+                    Colors.indigo[700]!,
+                    'Current',
+                    Icons.directions_bus,
+                  ),
+                  _buildLegendItem(
+                    Colors.grey[400]!,
+                    'Upcoming',
+                    Icons.schedule,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label, IconData icon) {
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          child: Icon(icon, color: Colors.white, size: 14),
+        ),
+        SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<RouteStop> _getRouteStops(String busNumber) {
+    // Sample route data - you can customize this based on actual routes
+    switch (busNumber) {
+      case '7A':
+        return [
+          RouteStop(
+            name: 'Arumbakkam',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'Nerkundram',
+            time: '6:45 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'Porur Toll',
+            time: '7:00 AM',
+            icon: Icons.toll,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:45 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+      default:
+        return [
+          RouteStop(
+            name: 'Starting Point',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'Intermediate Stop',
+            time: '6:45 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:45 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+    }
+  }
+}
+
+class RouteStop {
+  final String name;
+  final String time;
+  final IconData icon;
+  final bool isCompleted;
+  final bool isCurrent;
+
+  RouteStop({
+    required this.name,
+    required this.time,
+    required this.icon,
+    this.isCompleted = false,
+    this.isCurrent = false,
+  });
+}
+
 class BusTrackingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -25,12 +386,13 @@ class BusTrackingDashboard extends StatefulWidget {
 
 class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
   String studentName = "MIR";
-  String studentId = "24BRS1438";
+  String studentId = "JUCSE14 3F";
   String busNumber = "7A";
   String busStatus = "Reached";
-  String busLocation = "Mogapair";
+  String busLocation = "Mogabari";
   String timeAgo = "1m ago";
   int _selectedIndex = 0;
+  int notificationCount = 3; // Sample notification count
 
   final List<Widget> _pages = [];
 
@@ -57,14 +419,49 @@ class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Dashboard'),
+        title: Text(
+          'Student Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         backgroundColor: Colors.indigo[700],
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.person_outline),
+          // Notifications Icon with Badge
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.notifications, color: Colors.white, size: 28),
+                onPressed: () {
+                  // Navigate to notifications page
+                  _showNotificationsBottomSheet(context);
+                },
+              ),
+              if (notificationCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: BoxConstraints(minWidth: 20, minHeight: 20),
+                    child: Text(
+                      notificationCount > 99 ? '99+' : '$notificationCount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
+          SizedBox(width: 8),
         ],
       ),
       drawer: Drawer(
@@ -184,6 +581,167 @@ class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
           });
           Navigator.pop(context);
         },
+      ),
+    );
+  }
+
+  void _showNotificationsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      notificationCount = 0;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'Mark all read',
+                    style: TextStyle(
+                      color: Colors.indigo[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            // Notifications List
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildNotificationItem(
+                    'Bus 7A Update',
+                    'Your bus is approaching Nerkundram stop',
+                    '2 min ago',
+                    Icons.directions_bus,
+                    Colors.blue,
+                    true,
+                  ),
+                  _buildNotificationItem(
+                    'Route Change',
+                    'Bus 7A route has been modified due to traffic',
+                    '15 min ago',
+                    Icons.warning,
+                    Colors.orange,
+                    true,
+                  ),
+                  _buildNotificationItem(
+                    'Arrival Alert',
+                    'Bus 7A will arrive in 5 minutes',
+                    '1 hour ago',
+                    Icons.schedule,
+                    Colors.green,
+                    true,
+                  ),
+                  _buildNotificationItem(
+                    'Maintenance Notice',
+                    'Bus services will be temporarily unavailable tomorrow',
+                    '2 hours ago',
+                    Icons.build,
+                    Colors.grey,
+                    false,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(
+    String title,
+    String message,
+    String time,
+    IconData icon,
+    Color iconColor,
+    bool isUnread,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      child: Card(
+        elevation: isUnread ? 2 : 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding: EdgeInsets.all(16),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+              fontSize: 16,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 4),
+              Text(
+                message,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 4),
+              Text(
+                time,
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+          trailing: isUnread
+              ? Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.indigo[700],
+                    shape: BoxShape.circle,
+                  ),
+                )
+              : null,
+        ),
       ),
     );
   }
@@ -371,18 +929,22 @@ class HomePage extends StatelessWidget {
                   Icons.my_location,
                   Colors.blue,
                   () {
-                    // Navigate to live tracking
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => TrackBusPage()),
+                    );
                   },
                 ),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionCard(
-                  'Bus Schedule',
-                  Icons.schedule,
+                  'Complaints',
+                  Icons
+                      .report_problem, // Changed from Icons.schedule to Icons.report_problem
                   Colors.orange,
                   () {
-                    // Navigate to schedule
+                    // Navigate to complaints
                   },
                 ),
               ),
@@ -397,14 +959,20 @@ class HomePage extends StatelessWidget {
                   Icons.map,
                   Colors.green,
                   () {
-                    // Navigate to route map
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RouteMapPage(busNumber: busNumber),
+                      ),
+                    );
                   },
                 ),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionCard(
-                  'Support',
+                  'Driver Details',
                   Icons.support_agent,
                   Colors.purple,
                   () {
@@ -479,23 +1047,394 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// Placeholder pages for menu items
-class TrackBusPage extends StatelessWidget {
+// Track Bus Page with Search and Bus List
+class TrackBusPage extends StatefulWidget {
+  @override
+  _TrackBusPageState createState() => _TrackBusPageState();
+}
+
+class _TrackBusPageState extends State<TrackBusPage> {
+  TextEditingController _searchController = TextEditingController();
+  List<String> allBuses = ['7A', '8A', '270', '7B', '9A', '15C', '22B', '45D'];
+  List<String> filteredBuses = [];
+  String? selectedBus;
+
+  @override
+  void initState() {
+    super.initState();
+    filteredBuses = allBuses;
+    _searchController.addListener(_filterBuses);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterBuses() {
+    setState(() {
+      if (_searchController.text.isEmpty) {
+        filteredBuses = allBuses;
+      } else {
+        filteredBuses = allBuses
+            .where(
+              (bus) => bus.toLowerCase().contains(
+                _searchController.text.toLowerCase(),
+              ),
+            )
+            .toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.directions_bus, size: 64, color: Colors.blue),
-          SizedBox(height: 16),
-          Text(
-            'Track Bus',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text('Live bus tracking will appear here'),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Track Bus',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search Bar
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search bus number...',
+                  hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey[600],
+                    size: 24,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Bus List
+            Text(
+              'Available Buses',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            Expanded(
+              child: filteredBuses.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No buses found',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Try searching with different keywords',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredBuses.length,
+                      itemBuilder: (context, index) {
+                        String busNumber = filteredBuses[index];
+                        bool isSelected = selectedBus == busNumber;
+
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 8),
+                          child: Card(
+                            elevation: isSelected ? 4 : 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? Colors.indigo[700]!
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              leading: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.indigo[700]
+                                      : Colors.indigo[100],
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: Icon(
+                                  Icons.directions_bus,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.indigo[700],
+                                  size: 28,
+                                ),
+                              ),
+                              title: Text(
+                                'Bus $busNumber',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? Colors.indigo[700]
+                                      : Colors.grey[800],
+                                ),
+                              ),
+                              subtitle: Text(
+                                _getBusRoute(busNumber),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getBusStatusColor(
+                                        busNumber,
+                                      ).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _getBusStatusColor(busNumber),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _getBusStatus(busNumber),
+                                      style: TextStyle(
+                                        color: _getBusStatusColor(busNumber),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: isSelected
+                                        ? Colors.indigo[700]
+                                        : Colors.grey[400],
+                                  ),
+                                ],
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  selectedBus = busNumber;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+
+            // Track Button
+            if (selectedBus != null)
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(top: 16),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LiveTrackingPage(busNumber: selectedBus!),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo[700],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.my_location, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Track Bus $selectedBus',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getBusRoute(String busNumber) {
+    Map<String, String> routes = {
+      '7A': 'Tambaram - Velachery - VIT',
+      '8A': 'Chrompet - Pallavaram - VIT',
+      '270': 'Perungudi - OMR - VIT',
+      '7B': 'Tambaram - GST Road - VIT',
+      '9A': 'Adyar - Guindy - VIT',
+      '15C': 'T.Nagar - Saidapet - VIT',
+      '22B': 'Anna Nagar - Kilpauk - VIT',
+      '45D': 'Porur - Kathipara - VIT',
+    };
+    return routes[busNumber] ?? 'Route information not available';
+  }
+
+  String _getBusStatus(String busNumber) {
+    List<String> statuses = ['Running', 'Reached', 'Delayed', 'Stopped'];
+    return statuses[busNumber.hashCode % statuses.length];
+  }
+
+  Color _getBusStatusColor(String busNumber) {
+    String status = _getBusStatus(busNumber);
+    switch (status.toLowerCase()) {
+      case 'running':
+        return Colors.blue;
+      case 'reached':
+        return Colors.green;
+      case 'delayed':
+        return Colors.orange;
+      case 'stopped':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+}
+
+// Live Tracking Page
+class LiveTrackingPage extends StatelessWidget {
+  final String busNumber;
+
+  LiveTrackingPage({required this.busNumber});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Bus $busNumber - Live Tracking',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on, size: 80, color: Colors.indigo[700]),
+            SizedBox(height: 20),
+            Text(
+              'Live Tracking',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Bus $busNumber',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.indigo[700],
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Map integration will be implemented here',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Features: Real-time location, ETA, Route display',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
