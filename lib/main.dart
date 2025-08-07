@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(BusTrackingApp());
@@ -365,7 +366,20 @@ class RouteStop {
   });
 }
 
-class BusTrackingApp extends StatelessWidget {
+class BusTrackingApp extends StatefulWidget {
+  @override
+  _BusTrackingAppState createState() => _BusTrackingAppState();
+}
+
+class _BusTrackingAppState extends State<BusTrackingApp> {
+  bool isDarkMode = false;
+
+  void toggleDarkMode(bool value) {
+    setState(() {
+      isDarkMode = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -373,13 +387,43 @@ class BusTrackingApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.indigo[700],
+          foregroundColor: Colors.white,
+        ),
       ),
-      home: BusTrackingDashboard(),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.grey[900],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[850],
+          foregroundColor: Colors.white,
+        ),
+        cardColor: Colors.grey[800],
+        drawerTheme: DrawerThemeData(backgroundColor: Colors.grey[850]),
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: BusTrackingDashboard(
+        onDarkModeChanged: toggleDarkMode,
+        isDarkMode: isDarkMode,
+      ),
     );
   }
 }
 
 class BusTrackingDashboard extends StatefulWidget {
+  final Function(bool) onDarkModeChanged;
+  final bool isDarkMode;
+
+  BusTrackingDashboard({
+    required this.onDarkModeChanged,
+    required this.isDarkMode,
+  });
+
   @override
   _BusTrackingDashboardState createState() => _BusTrackingDashboardState();
 }
@@ -408,10 +452,13 @@ class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
         timeAgo: timeAgo,
       ),
       TrackBusPage(),
-      DriverDetailsPage(),
+      FeeReceiptPage(),
       TransportOfficePage(),
       ProfilePage(),
-      SettingsPage(),
+      SettingsPage(
+        isDarkMode: widget.isDarkMode,
+        onDarkModeChanged: widget.onDarkModeChanged,
+      ),
     ]);
   }
 
@@ -521,7 +568,7 @@ class _BusTrackingDashboardState extends State<BusTrackingDashboard> {
               ),
               _buildDrawerItem(Icons.home, 'Home', 0),
               _buildDrawerItem(Icons.directions_bus, 'Track Bus', 1),
-              _buildDrawerItem(Icons.person, 'Driver Details', 2),
+              _buildDrawerItem(Icons.receipt_long, 'Fee Receipt', 2),
               _buildDrawerItem(Icons.local_shipping, 'Transport Office', 3),
               _buildDrawerItem(Icons.account_circle, 'Profile', 4),
               _buildDrawerItem(Icons.settings, 'Settings', 5),
@@ -793,7 +840,7 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Welcome...',
+                  'Powerfull people come from powerful places!',
                   style: TextStyle(fontSize: 16, color: Colors.white70),
                 ),
                 SizedBox(height: 16),
@@ -929,9 +976,11 @@ class HomePage extends StatelessWidget {
                   Icons.my_location,
                   Colors.blue,
                   () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => TrackBusPage()),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Live tracking will be available soon!'),
+                        backgroundColor: Colors.indigo[700],
+                      ),
                     );
                   },
                 ),
@@ -978,7 +1027,7 @@ class HomePage extends StatelessWidget {
                   Icons.support_agent,
                   Colors.purple,
                   () {
-                    // Navigate to support
+                    _showDriverDetails(context, busNumber);
                   },
                 ),
               ),
@@ -1047,6 +1096,288 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+  void _showDriverDetails(BuildContext context, String busNumber) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Header
+            Text(
+              'Driver Details',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Bus $busNumber Driver Information',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
+
+            // Driver Info
+            Row(
+              children: [
+                // Driver Image
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.indigo[700]!, width: 3),
+                  ),
+                  child: ClipOval(
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+
+                // Driver Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getDriverName(busNumber),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '${_getDriverExperience(busNumber)} years experience',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.indigo[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+
+                      // Rating
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            double rating = _getDriverRating(busNumber);
+                            return Icon(
+                              index < rating.floor()
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber[600],
+                              size: 20,
+                            );
+                          }),
+                          SizedBox(width: 8),
+                          Text(
+                            '${_getDriverRating(busNumber).toStringAsFixed(1)}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+
+            // Phone Number
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.phone, color: Colors.green[600], size: 20),
+                ),
+                title: Text('Phone Number'),
+                subtitle: Text(_getDriverPhone(busNumber)),
+                trailing: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.call, color: Colors.white, size: 18),
+                    onPressed: () => _callDriver(_getDriverPhone(busNumber)),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 12),
+
+            // Emergency Contact
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.emergency,
+                    color: Colors.red[600],
+                    size: 20,
+                  ),
+                ),
+                title: Text('Emergency'),
+                subtitle: Text('+91 98765 43210'),
+                trailing: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.call, color: Colors.white, size: 18),
+                    onPressed: () => _callDriver('+91 98765 43210'),
+                  ),
+                ),
+              ),
+            ),
+
+            Spacer(),
+
+            // Close Button
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo[700],
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Helper methods for driver information
+String _getDriverName(String busNumber) {
+  Map<String, String> drivers = {
+    '7A': 'Mr. Rajesh Kumar',
+    '8A': 'Mr. Suresh Babu',
+    '270': 'Mr. Venkat Reddy',
+    '7B': 'Mr. Mahesh Singh',
+    '9A': 'Mr. Prakash Rao',
+    '15C': 'Mr. Dinesh Kumar',
+    '22B': 'Mr. Ramesh Sharma',
+    '45D': 'Mr. Lokesh Gupta',
+  };
+  return drivers[busNumber] ?? 'Mr. John Driver';
+}
+
+String _getDriverPhone(String busNumber) {
+  Map<String, String> phones = {
+    '7A': '+91 98765 12345',
+    '8A': '+91 98765 12346',
+    '270': '+91 98765 12347',
+    '7B': '+91 98765 12348',
+    '9A': '+91 98765 12349',
+    '15C': '+91 98765 12350',
+    '22B': '+91 98765 12351',
+    '45D': '+91 98765 12352',
+  };
+  return phones[busNumber] ?? '+91 98765 00000';
+}
+
+double _getDriverRating(String busNumber) {
+  Map<String, double> ratings = {
+    '7A': 4.5,
+    '8A': 4.2,
+    '270': 4.8,
+    '7B': 4.3,
+    '9A': 4.6,
+    '15C': 4.1,
+    '22B': 4.7,
+    '45D': 4.4,
+  };
+  return ratings[busNumber] ?? 4.0;
+}
+
+int _getDriverExperience(String busNumber) {
+  Map<String, int> experience = {
+    '7A': 8,
+    '8A': 5,
+    '270': 12,
+    '7B': 6,
+    '9A': 10,
+    '15C': 4,
+    '22B': 15,
+    '45D': 7,
+  };
+  return experience[busNumber] ?? 5;
+}
+
+void _callDriver(String phoneNumber) {
+  // Phone call functionality
+  print('Calling: $phoneNumber');
+  // You can implement actual phone call functionality here
 }
 
 // Track Bus Page with Search and Bus List
@@ -1400,39 +1731,61 @@ class LiveTrackingPage extends StatelessWidget {
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Map Section
+            _buildMapSection(context),
+            SizedBox(height: 20),
+
+            // Driver Details Section
+            _buildDriverDetailsSection(context),
+            SizedBox(height: 20),
+
+            // Route Map Section
+            _buildRouteMapSection(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapSection(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        height: 200,
+        padding: EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.location_on, size: 80, color: Colors.indigo[700]),
-            SizedBox(height: 20),
+            Icon(Icons.map, size: 60, color: Colors.indigo[700]),
+            SizedBox(height: 12),
             Text(
-              'Live Tracking',
+              'Live Map',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey[800],
               ),
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 8),
             Text(
-              'Bus $busNumber',
+              'Bus $busNumber Location',
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
+                fontSize: 16,
                 color: Colors.indigo[700],
+                fontWeight: FontWeight.w600,
               ),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Map integration will be implemented here',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 8),
             Text(
-              'Features: Real-time location, ETA, Route display',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              'Google Maps integration will be implemented here',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1440,46 +1793,1035 @@ class LiveTrackingPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class DriverDetailsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.person, size: 64, color: Colors.green),
-          SizedBox(height: 16),
-          Text(
-            'Driver Details',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+  Widget _buildDriverDetailsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Driver Details',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            TextButton(
+              onPressed: () => _showFullDriverDetails(context),
+              child: Text(
+                'View Full Details',
+                style: TextStyle(
+                  color: Colors.indigo[700],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          SizedBox(height: 8),
-          Text('Driver information will appear here'),
-        ],
+          child: Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Driver Image
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.indigo[700]!, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.person,
+                        size: 35,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+
+                // Driver Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getDriverName(busNumber),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '${_getDriverExperience(busNumber)} years experience',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            double rating = _getDriverRating(busNumber);
+                            return Icon(
+                              index < rating.floor()
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber[600],
+                              size: 16,
+                            );
+                          }),
+                          SizedBox(width: 8),
+                          Text(
+                            '${_getDriverRating(busNumber).toStringAsFixed(1)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Call Button
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(22.5),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.call, color: Colors.white, size: 20),
+                    onPressed: () => _callDriver(_getDriverPhone(busNumber)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRouteMapSection(BuildContext context) {
+    List<RouteStop> stops = _getRouteStops(busNumber);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Route Map',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Bus $busNumber Schedule',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+        ),
+        SizedBox(height: 16),
+
+        Container(
+          height: 300, // Fixed height for the route timeline
+          child: ListView.builder(
+            itemCount: stops.length,
+            itemBuilder: (context, index) {
+              RouteStop stop = stops[index];
+              bool isLast = index == stops.length - 1;
+
+              return Container(
+                margin: EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Timeline indicator
+                    Column(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: stop.isCompleted
+                                ? Colors.green[600]
+                                : stop.isCurrent
+                                ? Colors.indigo[700]
+                                : Colors.grey[300],
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Icon(
+                            stop.icon,
+                            color: stop.isCompleted || stop.isCurrent
+                                ? Colors.white
+                                : Colors.grey[600],
+                            size: 16,
+                          ),
+                        ),
+                        if (!isLast)
+                          Container(
+                            width: 2,
+                            height: 40,
+                            color: Colors.grey[300],
+                            margin: EdgeInsets.symmetric(vertical: 4),
+                          ),
+                      ],
+                    ),
+                    SizedBox(width: 12),
+
+                    // Stop information
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: stop.isCurrent
+                              ? Colors.indigo[50]
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: stop.isCurrent
+                                ? Colors.indigo[700]!
+                                : Colors.grey[200]!,
+                            width: stop.isCurrent ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    stop.name,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: stop.isCurrent
+                                          ? Colors.indigo[700]
+                                          : Colors.grey[800],
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: stop.isCompleted
+                                        ? Colors.green[100]
+                                        : stop.isCurrent
+                                        ? Colors.indigo[100]
+                                        : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    stop.time,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: stop.isCompleted
+                                          ? Colors.green[700]
+                                          : stop.isCurrent
+                                          ? Colors.indigo[700]
+                                          : Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (stop.isCurrent) ...[
+                              SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.directions_bus,
+                                    size: 14,
+                                    color: Colors.indigo[700],
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Bus is currently here',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.indigo[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (stop.isCompleted && !stop.isCurrent) ...[
+                              SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 14,
+                                    color: Colors.green[600],
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Reached',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.green[600],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper methods for driver information (bus-specific)
+  String _getDriverName(String busNumber) {
+    Map<String, String> drivers = {
+      '7A': 'Mr. Rajesh Kumar',
+      '8A': 'Mr. Suresh Babu',
+      '270': 'Mr. Venkat Reddy',
+      '7B': 'Mr. Mahesh Singh',
+      '9A': 'Mr. Prakash Rao',
+      '15C': 'Mr. Dinesh Kumar',
+      '22B': 'Mr. Ramesh Sharma',
+      '45D': 'Mr. Lokesh Gupta',
+    };
+    return drivers[busNumber] ?? 'Mr. John Driver';
+  }
+
+  String _getDriverPhone(String busNumber) {
+    Map<String, String> phones = {
+      '7A': '+91 98765 12345',
+      '8A': '+91 98765 12346',
+      '270': '+91 98765 12347',
+      '7B': '+91 98765 12348',
+      '9A': '+91 98765 12349',
+      '15C': '+91 98765 12350',
+      '22B': '+91 98765 12351',
+      '45D': '+91 98765 12352',
+    };
+    return phones[busNumber] ?? '+91 98765 00000';
+  }
+
+  double _getDriverRating(String busNumber) {
+    Map<String, double> ratings = {
+      '7A': 4.5,
+      '8A': 4.2,
+      '270': 4.8,
+      '7B': 4.3,
+      '9A': 4.6,
+      '15C': 4.1,
+      '22B': 4.7,
+      '45D': 4.4,
+    };
+    return ratings[busNumber] ?? 4.0;
+  }
+
+  int _getDriverExperience(String busNumber) {
+    Map<String, int> experience = {
+      '7A': 8,
+      '8A': 5,
+      '270': 12,
+      '7B': 6,
+      '9A': 10,
+      '15C': 4,
+      '22B': 15,
+      '45D': 7,
+    };
+    return experience[busNumber] ?? 5;
+  }
+
+  void _callDriver(String phoneNumber) {
+    print('Calling: $phoneNumber');
+    // You can implement actual phone call functionality here
+  }
+
+  void _showFullDriverDetails(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Header
+            Text(
+              'Driver Details',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Bus $busNumber Driver Information',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
+
+            // Driver Info
+            Row(
+              children: [
+                // Driver Image
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.indigo[700]!, width: 3),
+                  ),
+                  child: ClipOval(
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+
+                // Driver Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getDriverName(busNumber),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '${_getDriverExperience(busNumber)} years experience',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.indigo[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+
+                      // Rating
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            double rating = _getDriverRating(busNumber);
+                            return Icon(
+                              index < rating.floor()
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber[600],
+                              size: 20,
+                            );
+                          }),
+                          SizedBox(width: 8),
+                          Text(
+                            '${_getDriverRating(busNumber).toStringAsFixed(1)}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+
+            // Phone Number
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.phone, color: Colors.green[600], size: 20),
+                ),
+                title: Text('Phone Number'),
+                subtitle: Text(_getDriverPhone(busNumber)),
+                trailing: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.call, color: Colors.white, size: 18),
+                    onPressed: () => _callDriver(_getDriverPhone(busNumber)),
+                  ),
+                ),
+              ),
+            ),
+
+            Spacer(),
+
+            // Close Button
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo[700],
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  // Route stops method - same as dashboard but bus-specific
+  List<RouteStop> _getRouteStops(String busNumber) {
+    switch (busNumber) {
+      case '7A':
+        return [
+          RouteStop(
+            name: 'Arumbakkam',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'Nerkundram',
+            time: '6:45 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'Porur Toll',
+            time: '7:00 AM',
+            icon: Icons.toll,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:45 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+      case '8A':
+        return [
+          RouteStop(
+            name: 'Chrompet',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'Pallavaram',
+            time: '6:50 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:30 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+      case '270':
+        return [
+          RouteStop(
+            name: 'Perungudi',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'OMR Junction',
+            time: '6:55 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:40 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+      default:
+        return [
+          RouteStop(
+            name: 'Starting Point',
+            time: '6:30 AM',
+            icon: Icons.location_on,
+            isCompleted: true,
+            isCurrent: false,
+          ),
+          RouteStop(
+            name: 'Intermediate Stop',
+            time: '6:45 AM',
+            icon: Icons.directions_bus,
+            isCompleted: false,
+            isCurrent: true,
+          ),
+          RouteStop(
+            name: 'VIT Chennai',
+            time: '7:45 AM',
+            icon: Icons.school,
+            isCompleted: false,
+            isCurrent: false,
+          ),
+        ];
+    }
   }
 }
 
 class TransportOfficePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.local_shipping, size: 64, color: Colors.orange),
-          SizedBox(height: 16),
-          Text(
-            'Transport Office',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text('Transport office details will appear here'),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Transport Office',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Transport Office',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Contact Information',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+
+            // Office Details Card
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.indigo[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.local_shipping,
+                            color: Colors.indigo[700],
+                            size: 28,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'VIT Transport Office',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Available 24/7 for assistance',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+
+                    // Office Address
+                    _buildInfoRow(
+                      Icons.location_on,
+                      'Address',
+                      'VIT Chennai Campus\nKelambakkam - Vandalur Rd\nChennai, Tamil Nadu 600127',
+                    ),
+                    SizedBox(height: 16),
+
+                    // Working Hours
+                    _buildInfoRow(
+                      Icons.access_time,
+                      'Working Hours',
+                      'Monday - Saturday: 7:00 AM - 6:00 PM\nSunday: Emergency only',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+
+            // Contact Numbers Section
+            Text(
+              'Contact Numbers',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 12),
+
+            // Phone Numbers with Call Buttons
+            _buildPhoneCard(
+              'Transport Manager',
+              '+91 98765 43210',
+              Icons.person,
+              Colors.blue,
+            ),
+            SizedBox(height: 12),
+
+            _buildPhoneCard(
+              'Emergency Helpline',
+              '+91 98765 43211',
+              Icons.emergency,
+              Colors.red,
+            ),
+            SizedBox(height: 12),
+
+            _buildPhoneCard(
+              'Main Office',
+              '+91 44 3993 1555',
+              Icons.business,
+              Colors.green,
+            ),
+            SizedBox(height: 12),
+
+            _buildPhoneCard(
+              'Bus Coordinator',
+              '+91 98765 43212',
+              Icons.directions_bus,
+              Colors.orange,
+            ),
+            SizedBox(height: 24),
+
+            // Quick Actions
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    'File Complaint',
+                    Icons.report_problem,
+                    Colors.orange,
+                    () {
+                      _showComplaintDialog(context);
+                    },
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    'Request Info',
+                    Icons.info,
+                    Colors.blue,
+                    () {
+                      _showInfoDialog(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String title, String content) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.indigo[700], size: 20),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhoneCard(
+    String title,
+    String phone,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 45,
+          height: 45,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        subtitle: Text(
+          phone,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Container(
+          width: 45,
+          height: 45,
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(22.5),
+          ),
+          child: IconButton(
+            icon: Icon(Icons.call, color: Colors.white, size: 20),
+            onPressed: () => _makePhoneCall(phone),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Icon(icon, size: 32, color: color),
+              SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+
+    // Note: You'll need to add url_launcher dependency to pubspec.yaml
+    // For now, showing a dialog as placeholder
+    // await launchUrl(launchUri);
+
+    // Placeholder - showing phone number
+    print('Calling: $phoneNumber');
+    // You can replace this with actual phone call functionality
+  }
+
+  void _showComplaintDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('File Complaint'),
+          content: Text(
+            'Complaint filing functionality will be implemented here.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Request Information'),
+          content: Text(
+            'Information request functionality will be implemented here.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1487,40 +2829,1006 @@ class TransportOfficePage extends StatelessWidget {
 class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.account_circle, size: 64, color: Colors.purple),
-          SizedBox(height: 16),
-          Text(
-            'Profile',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text('Your profile information will appear here'),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Profile',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Profile Header
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.indigo[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.indigo[100]!),
+              ),
+              child: Column(
+                children: [
+                  // Profile Picture
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.indigo[700],
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(Icons.person, size: 50, color: Colors.white),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'MIR',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'JUCSE14 3F',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Profile Information
+            Text(
+              'Profile Information',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Information Cards
+            _buildInfoCard('Name', 'MIR', Icons.person),
+            _buildInfoCard('Student ID', 'JUCSE14 3F', Icons.badge),
+            _buildInfoCard('Bus Number', '7A', Icons.directions_bus),
+            _buildInfoCard('Email', 'mir@vit.ac.in', Icons.email),
+            _buildInfoCard('Mobile', '+91 98765 43210', Icons.phone),
+            _buildInfoCard('Department', 'Computer Science', Icons.school),
+            _buildInfoCard('Year', '3rd Year', Icons.calendar_today),
+
+            SizedBox(height: 24),
+
+            // Action Buttons
+            _buildActionButton(
+              'Edit Profile',
+              Icons.edit,
+              Colors.indigo[700]!,
+              () {
+                // Handle edit profile
+                _showEditDialog(context);
+              },
+            ),
+            SizedBox(height: 12),
+            _buildActionButton(
+              'Change Password',
+              Icons.lock,
+              Colors.orange[600]!,
+              () {
+                // Handle change password
+                _showChangePasswordDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String label, String value, IconData icon) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.indigo[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Colors.indigo[700], size: 24),
+          ),
+          title: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          subtitle: Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[800],
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20),
+            SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Profile'),
+          content: Text(
+            'Profile editing functionality will be implemented here.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change Password'),
+          content: Text(
+            'Password change functionality will be implemented here.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-class SettingsPage extends StatelessWidget {
+// Updated Settings Page based on the image format
+class SettingsPage extends StatefulWidget {
+  final bool isDarkMode;
+  final Function(bool) onDarkModeChanged;
+
+  SettingsPage({required this.isDarkMode, required this.onDarkModeChanged});
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late bool darkMode;
+  bool manageNotification = true;
+  bool privacyPolicy = true;
+  bool sendFeedback = true;
+  bool signOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    darkMode = widget.isDarkMode;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.settings, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Settings',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Settings',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Dark Mode
+            _buildSettingsItem('Dark Mode', Icons.dark_mode, darkMode, (value) {
+              setState(() {
+                darkMode = value;
+              });
+              widget.onDarkModeChanged(value);
+            }),
+
+            // Manage Notification
+            _buildSettingsItem(
+              'Manage Notification',
+              Icons.notifications,
+              manageNotification,
+              (value) {
+                setState(() {
+                  manageNotification = value;
+                });
+              },
+            ),
+
+            // Privacy Policy
+            _buildSettingsItem(
+              'Privacy Policy',
+              Icons.privacy_tip,
+              privacyPolicy,
+              (value) {
+                setState(() {
+                  privacyPolicy = value;
+                });
+              },
+            ),
+
+            // Send Feedback
+            _buildSettingsItem('Send Feedback', Icons.feedback, sendFeedback, (
+              value,
+            ) {
+              setState(() {
+                sendFeedback = value;
+              });
+            }),
+
+            // Sign Out
+            _buildSettingsItem('Sign Out', Icons.logout, signOut, (value) {
+              setState(() {
+                signOut = value;
+              });
+              if (value) {
+                _showSignOutDialog(context);
+              }
+            }, isSignOut: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsItem(
+    String title,
+    IconData icon,
+    bool value,
+    Function(bool) onChanged, {
+    bool isSignOut = false,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Theme.of(context).cardColor,
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isSignOut ? Colors.red[100] : Colors.indigo[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: isSignOut ? Colors.red[600] : Colors.indigo[700],
+              size: 24,
+            ),
           ),
-          SizedBox(height: 8),
-          Text('App settings will appear here'),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isSignOut
+                  ? Colors.red[600]
+                  : Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+          trailing: Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: isSignOut ? Colors.red[600] : Colors.indigo[700],
+              activeTrackColor: isSignOut
+                  ? Colors.red[200]
+                  : Colors.indigo[200],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).dialogBackgroundColor,
+          title: Text(
+            'Sign Out',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to sign out?',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  signOut = false;
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Handle actual sign out logic here
+              },
+              child: Text('Sign Out', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class FeeReceiptPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Fee Receipt',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.indigo[700],
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Fee Receipt',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Annual Bus Transportation Fee',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+
+            // Receipt Card
+            Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.white, Colors.grey[50]!],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Receipt Header
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.indigo[700],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.school,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'VIT CHENNAI',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          Text(
+                            'Transport Department',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.green[600]!,
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              'RECEIPT',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24),
+
+                    // Student Details Section
+                    _buildSectionHeader('Student Details'),
+                    SizedBox(height: 12),
+                    _buildDetailRow('Name', 'MIR'),
+                    _buildDetailRow('Registration No.', 'JUCSE14 3F'),
+                    _buildDetailRow('Course', 'B.Tech CSE'),
+                    _buildDetailRow('Academic Year', '2024-2025'),
+
+                    SizedBox(height: 20),
+
+                    // Bus Details Section
+                    _buildSectionHeader('Bus Details'),
+                    SizedBox(height: 12),
+                    _buildDetailRow('Bus Number', '7A'),
+                    _buildDetailRow('Route', 'Tambaram - Velachery - VIT'),
+
+                    // AC/NON AC Bus Type - Bold notation
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Bus Type:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.blue[600]!,
+                              width: 2,
+                            ),
+                          ),
+                          child: Text(
+                            'AC BUS',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // Fee Details Section
+                    _buildSectionHeader('Fee Details'),
+                    SizedBox(height: 12),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildFeeDetailRow('Annual Bus Fee (AC)', '₹ 24,000'),
+                          Divider(color: Colors.grey[400]),
+                          _buildFeeDetailRow('Processing Fee', '₹ 500'),
+                          Divider(color: Colors.grey[400]),
+                          _buildFeeDetailRow(
+                            'Total Amount',
+                            '₹ 24,500',
+                            isTotal: true,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // Payment Details Section
+                    _buildSectionHeader('Payment Details'),
+                    SizedBox(height: 12),
+                    _buildDetailRow('Payment Date', '15 Aug 2024'),
+                    _buildDetailRow('Transaction ID', 'TXN2024080001'),
+                    _buildDetailRow('Payment Mode', 'Online'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Status:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green[100],
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.green[600]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.green[600],
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'PAID',
+                                style: TextStyle(
+                                  color: Colors.green[700],
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 24),
+
+                    // QR Code Section
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'QR Code for Verification',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.grey[300]!,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.qr_code,
+                                  size: 60,
+                                  color: Colors.grey[600],
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'QR CODE',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Scan to verify receipt authenticity',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // Footer
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'This is a computer generated receipt',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Valid for Academic Year 2024-2025',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // Download Button
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  _downloadReceipt(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo[700],
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.download, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Download Receipt',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            // Additional Info Card
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.blue[600], size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Important Information',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      '• Keep this receipt safe for verification purposes\n'
+                      '• Bus pass will be issued separately\n'
+                      '• Fee is non-refundable once academic year starts\n'
+                      '• For queries, contact Transport Office',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      padding: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.indigo[700]!, width: 2),
+        ),
+      ),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.indigo[700],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[800],
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeeDetailRow(
+    String label,
+    String amount, {
+    bool isTotal = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 18 : 16,
+              color: isTotal ? Colors.grey[800] : Colors.grey[700],
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: isTotal ? 20 : 16,
+              color: isTotal ? Colors.green[700] : Colors.grey[800],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _downloadReceipt(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.download, color: Colors.indigo[700]),
+              SizedBox(width: 8),
+              Text('Download Receipt'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Select download format:'),
+              SizedBox(height: 16),
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.picture_as_pdf, color: Colors.red),
+                title: Text('PDF Format'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  // Handle PDF download
+                  _showDownloadSuccess(context, 'PDF');
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.image, color: Colors.blue),
+                title: Text('Image Format (PNG)'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  // Handle image download
+                  _showDownloadSuccess(context, 'PNG');
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDownloadSuccess(BuildContext context, String format) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Receipt downloaded as $format successfully!'),
+          ],
+        ),
+        backgroundColor: Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -2768,21 +5076,3 @@ class Complaint {
     required this.description,
   });
 }
-
-// Update the HomePage quick action for complaints
-// Replace the existing complaints quick action in your main.dart with:
-/*
-Expanded(
-  child: _buildQuickActionCard(
-    'Complaints',
-    Icons.report_problem,
-    Colors.orange,
-    () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ComplaintsPage()),
-      );
-    },
-  ),
-),
-*/
